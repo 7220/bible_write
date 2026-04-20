@@ -34,7 +34,6 @@ let verseOrder = [];
 let currentIndex = 0;
 let correctCount = 0;
 let isRandom = false;
-let spacingMode = 'strict';
 
 // 초기화
 function init() {
@@ -109,24 +108,28 @@ function updateStartButton() {
 
 // 받아쓰기 시작
 function startDictation() {
-    // 출제 방식 (랜덤/순서)
+    // 출제 방식 확인
     isRandom = document.querySelector('input[name="mode"]:checked').value === 'random';
     
-    // ← 띄어쓰기 모드 추가
-    spacingMode = document.querySelector('input[name="spacing"]:checked').value;
-    
+    // 구절 가져오기
     verses = bibleData[currentBook][currentChapter];
     
+    // 순서 설정
     verseOrder = [...Array(verses.length).keys()];
-    if (isRandom) shuffleArray(verseOrder);
+    if (isRandom) {
+        shuffleArray(verseOrder);
+    }
     
+    // 상태 초기화
     currentIndex = 0;
     correctCount = 0;
     
+    // UI 전환
     settingsPanel.style.display = 'none';
     dictationArea.style.display = 'block';
     finalResult.style.display = 'none';
     
+    // 첫 번째 구절 표시
     showVerse();
 }
 
@@ -186,22 +189,11 @@ function showHint() {
 function checkAnswer() {
     const verseIndex = verseOrder[currentIndex];
     const verse = verses[verseIndex];
-    const correctText = verse.text.trim();
-    const userText = answerInput.value.trim();
-
-    let isCorrect = false;
-
-    if (spacingMode === 'strict') {
-        // 엄격 모드: 띄어쓰기까지 완전히 동일해야 함
-        isCorrect = correctText === userText;
-    } else {
-        // 느슨한 모드: 띄어쓰기 무시하고 비교
-        const normalizedCorrect = normalizeText(correctText);
-        const normalizedUser = normalizeText(userText);
-        isCorrect = normalizedCorrect === normalizedUser;
-    }
-
-    // 결과 표시
+    const correctText = normalizeText(verse.text);
+    const userText = normalizeText(answerInput.value);
+    
+    const isCorrect = correctText === userText;
+    
     if (isCorrect) {
         correctCount++;
         resultTitle.textContent = '✅ 정답입니다!';
@@ -210,28 +202,20 @@ function checkAnswer() {
         resultTitle.textContent = '❌ 아쉬워요';
         resultTitle.className = 'incorrect';
     }
-
-    correctAnswer.textContent = correctText;
-
-    if (isCorrect) {
-        userAnswer.innerHTML = `<span class="highlight-correct">${userText || '(입력 없음)'}</span>`;
-    } else {
-        if (spacingMode === 'strict') {
-            userAnswer.innerHTML = highlightDifferences(correctText, userText);
-        } else {
-            // 느슨한 모드에서는 단순히 사용자 입력 표시
-            userAnswer.innerHTML = `<span class="highlight-wrong">${userText || '(입력 없음)'}</span>`;
-        }
-    }
-
+    
+    correctAnswer.textContent = verse.text;
+    userAnswer.innerHTML = isCorrect 
+        ? answerInput.value 
+        : highlightDifferences(verse.text, answerInput.value);
+    
     resultArea.style.display = 'flex';
 }
 
 // 텍스트 정규화 (비교용)
 function normalizeText(text) {
     return text
-        .replace(/\s+/g, '')           // 모든 공백 제거
-        .replace(/[.,!?;:'"()]/g, '')  // 구두점 제거
+        .replace(/\s+/g, ' ')
+        .replace(/[.,!?;:'"()]/g, '')
         .trim()
         .toLowerCase();
 }

@@ -480,3 +480,14 @@ textarea::placeholder {
     padding: 0 4px;
     border-radius: 2px;
 }
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.setting-group {
+    margin: 15px 0;
+}
